@@ -23,5 +23,6 @@ jobs:
           event-type: ping_cve
           client-payload: |
               {
-              "cve": "${{ github.event.inputs.cve_id }}"
+              "cve": "${{ github.event.inputs.cve_id }}",
+              "branch": "report-bot"
               }
