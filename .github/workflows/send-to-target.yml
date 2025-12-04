@@ -26,7 +26,8 @@ jobs:
           else
             echo "repo=${{github.event.client_payload.target_repo}}" >> $GITHUB_OUTPUT
             echo "cve=${{github.event.client_payload.cve_id}}" >> $GITHUB_OUTPUT
-            
+          fi
+  
       - name: Dispatch to target repo
         uses: peter-evans/repository-dispatch@v3
         with:
