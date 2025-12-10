@@ -41,5 +41,7 @@ jobs:
           event-type: scan_cve
           client-payload: |
               {
-              "cve": "${{ steps.source.outputs.cve }}"
+              "cve": "${{ steps.source.outputs.cve }}",
+              "source_owner": "${{ github.repository_owner }}",
+              "source_repo": "${{ github.repository }}",
               }
