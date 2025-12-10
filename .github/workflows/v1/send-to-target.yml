@@ -1,0 +1,41 @@
+name: Send CVE to Target Repo
+
+on: 
+  repository_dispatch:
+    types: [run_cve_scan]
+  workflow_dispatch:
+    inputs:
+      target_repo:
+          description: "owner/repo"
+          required: true
+      cve_id:
+          description: "CVE ID"
+          required: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set repo and cve
+        id: source
+        run: |
+          if ["${{github.event_name}}"="workflow_dispatch"]; then
+            echo "repo=${{github.event.inputs.target_repo}}" >> $GITHUB_OUTPUT
+            echo "cve=${{github.event.inputs.cve_id}}" >> $GITHUB_OUTPUT
+          else
+            echo "repo=${{github.event.client_payload.target_repo}}" >> $GITHUB_OUTPUT
+            echo "cve=${{github.event.client_payload.cve_id}}" >> $GITHUB_OUTPUT
+          fi
+  
+      - name: Dispatch to target repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.TARGET_REPO_DISPATCH_TOKEN}}
+          repository: ${{ steps.source.outputs.repo }}
+          event-type: ping_cve
+          client-payload: |
+              {
+              "cve": "${{ steps.source.outputs.cve }}",
+              "branch": "report-bot"
+              }
