@@ -1,7 +1,6 @@
 ---
 name: GithubAction-Security-Agent
 description: "CVE ID で脆弱性分析を行う"
-model: OpenAI GPT-5.1-Codex-Max (PREVIEW)
 ---
 
 ## 目的
