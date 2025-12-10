@@ -43,5 +43,5 @@ jobs:
               {
               "cve": "${{ steps.source.outputs.cve }}",
               "source_owner": "${{ github.repository_owner }}",
-              "source_repo": "${{ github.repository }}",
+              "source_repo": "${{ github.repository }}"
               }
