@@ -58,9 +58,13 @@ jobs:
       - name: CVE and Repo Info
         id:   info
         run: |
-          echo "CVE=$(echo "${{ matrix.config.cve }}" | jq -r 'join(",")')" >> $GITHUB_OUTPUT
           echo "TARGET_REPO=${{ matrix.config.target_repo }}" >> $GITHUB_OUTPUT
           echo "REPO_NAME=$(echo "${{ matrix.config.target_repo }}" | cut -d'/' -f2)" >> $GITHUB_OUTPUT
+          CVE_ARRAY='${{ toJson(matrix.config.cve) }}'
+          echo "DEBUG: CVE_ARRAY=$CVE_ARRAY"
+          CVE=$(echo "$CVE_ARRAY" | jq -r 'join(",")')
+          echo "DEBUG: CVE=$CVE"
+          echo "CVE=$CVE" >> $GITHUB_OUTPUT
 
       - name: Checkout target repo
         uses: actions/checkout@v4
