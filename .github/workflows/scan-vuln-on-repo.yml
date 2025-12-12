@@ -92,7 +92,7 @@ jobs:
           PROMPT+=$'\n\nTask:\n'
           PROMPT+="- ${{ steps.info.outputs.CVE }} について現レポジトリ全体にあるコードを確認し、脆弱性レポートを作成してください。"
           PROMPT+=$'\n- 作成したレポートは /tmp/'"$REPO_NAME"'フォルダに保存して下さい。'
-          PROMPT+=$'\n- ファイル名は '"'"'CVE-XXXX-YYYY-report.txt'"'"' の形式にし、CVEごとにファイルを分けてください。'
+          PROMPT+=$'\n- ファイル名は '"'"'CVE-XXXX-YYYY-report.md'"'"' の形式にし、CVEごとにファイルを分けてください。'
           echo "=== PROMPT CONTENT START ==="
           echo "$PROMPT"
           echo "=== PROMPT CONTENT END ==="
