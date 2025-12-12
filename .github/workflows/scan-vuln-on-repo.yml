@@ -31,7 +31,7 @@ jobs:
       - name: Parse payload
         id:   parse
         run: |
-          PAYLOAD='${{ github.event.inputs.payload || github.event.client_payload.payload }}'
+          PAYLOAD='${{ toJson(github.event.inputs.payload || github.event.client_payload.payload) }}'
           echo "config=$PAYLOAD" >> $GITHUB_OUTPUT
 
       - name: Checkout report repo
