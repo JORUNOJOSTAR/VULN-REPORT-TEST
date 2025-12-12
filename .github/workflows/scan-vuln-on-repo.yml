@@ -32,7 +32,8 @@ jobs:
         id:   parse
         run: |
           PAYLOAD='${{ toJson(github.event.inputs.payload || github.event.client_payload.payload) }}'
-          echo "config=$PAYLOAD" >> $GITHUB_OUTPUT
+          COMPACT_PAYLOAD=$(echo "$PAYLOAD" | jq -c .)
+          echo "config=$COMPACT_PAYLOAD" >> $GITHUB_OUTPUT
 
       - name: Checkout report repo
         uses: actions/checkout@v4
