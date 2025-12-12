@@ -1,0 +1,112 @@
+name: Scan CVE in Target Repo
+
+on: 
+  repository_dispatch:
+    types: [run_cve_scan]
+  workflow_dispatch:
+    inputs:
+      payload:
+          description: "JSON payload with repos and CVEs"
+          required:    true
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  setup:
+    runs-on:  ubuntu-latest
+    outputs:
+      config:   ${{ steps.parse.outputs.config }}
+      agent_md: ${{ steps.agent_md.outputs.content }}
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache:        'npm'
+
+      - name: Setup Copilot CLI with npm
+        run:  npm i -g @github/copilot
+
+      - name: Parse payload
+        id:   parse
+        run: |
+          echo "config=${{ github.event.inputs.payload || github.event.client_payload.payload }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout report repo
+        uses: actions/checkout@v4
+        with:
+          ref:         main
+          fetch-depth: 1
+
+      - name: Get agent_md file content
+        id:   agent_md
+        run: |
+          AGENT_CONTENT=$(cat .github/agents/security-agent.md)
+          echo "content=$AGENT_CONTENT" >> $GITHUB_OUTPUT
+
+  scan-and-commit:
+    needs:   setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config: ${{ fromJson(needs.setup.outputs.config) }}
+    
+    env:
+      TARGET_REPO_TOKEN:    ${{ secrets.TARGET_REPO_TOKEN }}
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      COPILOT_MODEL:        ${{ vars.COPILOT_MODEL }}
+      AGENT_MD:             ${{ needs.setup.outputs.agent_md }}
+
+    steps:
+      - name: CVE and Repo Info
+        id:   info
+        run: |
+          echo "CVE=$(echo "${{ matrix.config.cve }}" | jq -r 'join(",")')" >> $GITHUB_OUTPUT
+          echo "TARGET_REPO=${{ matrix.config.target_repo }}" >> $GITHUB_OUTPUT
+          echo "REPO_NAME=$(echo "${{ matrix.config.target_repo }}" | cut -d'/' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          ref:         main
+          repository:  ${{ steps.info.outputs.TARGET_REPO }}
+          token:       ${{ env.TARGET_REPO_TOKEN }}
+          fetch-depth: 1
+
+      - name: Run Security Agent with Copilot CLI
+        run: |
+            echo "Reading agent file..."
+            PROMPT="$AGENT_MD"
+            REPO_NAME="${{ steps.info.outputs.REPO_NAME }}"
+            PROMPT+=$'\n\nContext:\n'
+            PROMPT+="- Repository: $REPO_NAME"
+            PROMPT+=$'\n\nTask:\n'
+            PROMPT+=$"- ${{ steps.info.outputs.CVE }}について現レポジトリ全体にあるコードを確認し、脆弱性レポートを作成してください。"
+            PROMPT+=$'\n- 作成したレポートは /tmp/'"${{ steps.info.outputs.REPO_NAME }}"'フォルダに保存して下さい。"
+            PROMPT+=$'\n- ファイル名は 'CVE-XXXX-YYYY-report.txt' の形式にし、CVEごとにファイルを分けてください。"
+            echo "=== PROMPT CONTENT START ==="
+            echo "$PROMPT"
+            echo "=== PROMPT CONTENT END ==="
+            echo "Calling copilot..."
+            copilot --prompt "$PROMPT" --model "$COPILOT_MODEL" --allow-all-tools --allow-all-paths < /dev/null
+
+      - name: Checkout report repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 1
+
+      - name: save md file
+        run: |
+            TODAY=$(date +%Y-%m-%d)
+            mkdir -p vuln-reports/${{ steps.info.outputs.REPO_NAME }}/$TODAY
+            cp -r /tmp/"${{ steps.info.outputs.REPO_NAME }}"/* vuln-reports/${{ steps.info.outputs.REPO_NAME }}/$TODAY/
+            git config user.name "report-bot"
+            git config user.email "bot@example.com"                
+            git add .
+            git commit -m "CVE returned from target-repo: ${{ steps.info.outputs.CVE }}"
+            git push origin main
