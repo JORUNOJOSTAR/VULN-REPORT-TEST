@@ -20,14 +20,6 @@ jobs:
       config:   ${{ steps.parse.outputs.config }}
       agent_md: ${{ steps.agent_md.outputs.content }}
     steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup Copilot CLI with npm
-        run:  npm i -g @github/copilot
-
       - name: Parse payload
         id:   parse
         run: |
@@ -45,10 +37,9 @@ jobs:
         id:   agent_md
         run: |
           AGENT_CONTENT=$(cat .github/agents/security-agent.md)
-          AGENT_CONTENT="${AGENT_CONTENT//'%'/'%25'}"
-          AGENT_CONTENT="${AGENT_CONTENT//$'\n'/'%0A'}"
-          AGENT_CONTENT="${AGENT_CONTENT//$'\r'/'%0D'}"
-          echo "content=$AGENT_CONTENT" >> $GITHUB_OUTPUT
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$AGENT_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   scan-and-commit:
     needs:   setup
@@ -78,6 +69,14 @@ jobs:
           repository:  ${{ steps.info.outputs.TARGET_REPO }}
           token:       ${{ env.TARGET_REPO_TOKEN }}
           fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Copilot CLI with npm
+        run:  npm i -g @github/copilot
 
       - name: Run Security Agent with Copilot CLI
         run: |
