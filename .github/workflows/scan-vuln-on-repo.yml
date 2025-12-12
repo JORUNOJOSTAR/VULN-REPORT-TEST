@@ -43,6 +43,9 @@ jobs:
         id:   agent_md
         run: |
           AGENT_CONTENT=$(cat .github/agents/security-agent.md)
+          AGENT_CONTENT="${AGENT_CONTENT//'%'/'%25'}"
+          AGENT_CONTENT="${AGENT_CONTENT//$'\n'/'%0A'}"
+          AGENT_CONTENT="${AGENT_CONTENT//$'\r'/'%0D'}"
           echo "content=$AGENT_CONTENT" >> $GITHUB_OUTPUT
 
   scan-and-commit:
