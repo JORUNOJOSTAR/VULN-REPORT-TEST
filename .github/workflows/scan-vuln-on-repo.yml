@@ -81,20 +81,20 @@ jobs:
 
       - name: Run Security Agent with Copilot CLI
         run: |
-            echo "Reading agent file..."
-            PROMPT="$AGENT_MD"
-            REPO_NAME="${{ steps.info.outputs.REPO_NAME }}"
-            PROMPT+=$'\n\nContext:\n'
-            PROMPT+="- Repository: $REPO_NAME"
-            PROMPT+=$'\n\nTask:\n'
-            PROMPT+=$"- ${{ steps.info.outputs.CVE }}について現レポジトリ全体にあるコードを確認し、脆弱性レポートを作成してください。"
-            PROMPT+=$'\n- 作成したレポートは /tmp/'"${{ steps.info.outputs.REPO_NAME }}"'フォルダに保存して下さい。"
-            PROMPT+=$'\n- ファイル名は 'CVE-XXXX-YYYY-report.txt' の形式にし、CVEごとにファイルを分けてください。"
-            echo "=== PROMPT CONTENT START ==="
-            echo "$PROMPT"
-            echo "=== PROMPT CONTENT END ==="
-            echo "Calling copilot..."
-            copilot --prompt "$PROMPT" --model "$COPILOT_MODEL" --allow-all-tools --allow-all-paths < /dev/null
+          echo "Reading agent file..."
+          PROMPT="$AGENT_MD"
+          REPO_NAME="${{ steps.info.outputs.REPO_NAME }}"
+          PROMPT+=$'\n\nContext:\n'
+          PROMPT+="- Repository: $REPO_NAME"
+          PROMPT+=$'\n\nTask:\n'
+          PROMPT+="- ${{ steps.info.outputs.CVE }} について現レポジトリ全体にあるコードを確認し、脆弱性レポートを作成してください。"
+          PROMPT+=$'\n- 作成したレポートは /tmp/'"$REPO_NAME"'フォルダに保存して下さい。'
+          PROMPT+=$'\n- ファイル名は '"'"'CVE-XXXX-YYYY-report.txt'"'"' の形式にし、CVEごとにファイルを分けてください。'
+          echo "=== PROMPT CONTENT START ==="
+          echo "$PROMPT"
+          echo "=== PROMPT CONTENT END ==="
+          echo "Calling copilot..."
+          copilot --prompt "$PROMPT" --model "$COPILOT_MODEL" --allow-all-tools --allow-all-paths < /dev/null
 
       - name: Checkout report repo
         uses: actions/checkout@v4
